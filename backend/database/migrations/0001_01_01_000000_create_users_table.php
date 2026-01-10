@@ -17,6 +17,15 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
+            
+            // --- الإضافة الاحترافية لمنصة منجز ---
+            // نستخدم enum لتحديد دور المستخدم بدقة (عميل، مستقل، أو مدير)
+            $table->enum('role', ['client', 'freelancer', 'admin'])->default('client');
+            
+            // حالة الحساب (نشط، محظور، قيد المراجعة)
+            $table->boolean('is_active')->default(true);
+            // ------------------------------------
+
             $table->rememberToken();
             $table->timestamps();
         });
