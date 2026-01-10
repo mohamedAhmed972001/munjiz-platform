@@ -20,6 +20,9 @@ return Application::configure(basePath: dirname(__DIR__))
           'api/register',
           'api/login',
       ]);
+      $middleware->alias([
+        'role' => \App\Http\Middleware\CheckRole::class,
+    ]);
   })
     ->withExceptions(function (Exceptions $exceptions) {
         //
