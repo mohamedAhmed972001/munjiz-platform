@@ -1,20 +1,23 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Register from './pages/Register';
-import Login from './pages/Login'; // 1. استيراد صفحة اللوجن الجديدة
+import Login from './pages/Login';
+import CompleteProfile from './pages/CompleteProfile'; // التأكد من الاسم هنا
+import Dashboard from './pages/Dashboard'; 
 
 function App() {
   return (
     <Router>
       <div className="App">
         <Routes>
-          {/* مسار صفحة التسجيل */}
           <Route path="/register" element={<Register />} />
-          
-          {/* 2. إضافة مسار صفحة تسجيل الدخول */}
           <Route path="/login" element={<Login />} />
           
-          {/* الصفحة الرئيسية المؤقتة */}
+          {/* ربط المسار بالكومبوننت اللي اسمه CompleteProfile */}
+          <Route path="/complete-profile" element={<CompleteProfile />} />
+          
+          <Route path="/dashboard" element={<Dashboard />} />
+
           <Route path="/" element={
             <div className="flex flex-col items-center justify-center h-screen font-bold">
               <h1 className="text-3xl mb-4">Welcome to Munjiz Platform 🚀</h1>

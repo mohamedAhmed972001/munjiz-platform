@@ -1,10 +1,10 @@
 <?php
 
 namespace Database\Seeders;
-use Illuminate\Support\Facades\DB;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\User;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 
 class AdminUserSeeder extends Seeder
 {
@@ -13,16 +13,16 @@ class AdminUserSeeder extends Seeder
      */
     public function run(): void
     {
-      DB::table('users')->insert([
-        [
+        // 1. إنشاء المستخدم باستخدام الموديل (عشان الـ Hash والـ Roles يشتغلوا)
+        $admin = User::create([
             'name' => 'Admin User',
             'email' => 'admin@munjiz.com',
-            'password' => bcrypt('password123'),
-            'role' => 'admin',
+            'password' => Hash::make('password123'), // الطريقة الأصح للتشفير
             'is_active' => true,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]
-    ]);
+        ]);
+
+        // 2. تعيين الرول له عن طريق الباكدج
+        // السطر ده هو اللي هيخليه Admin حقيقي في جداول Spatie
+        $admin->assignRole('admin');
     }
 }

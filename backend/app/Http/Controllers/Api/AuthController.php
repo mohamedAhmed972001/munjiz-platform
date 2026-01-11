@@ -20,25 +20,29 @@ class AuthController extends Controller
      * تسجيل مستخدم جديد
      * Milestone 1.3: Validation & Sanitization
      */
-    public function register(Request $request): JsonResponse
-    {
-        // 1. Validation الصارم
-        $request->validate([
-            'name'     => 'required|string|max:255',
-            'email'    => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8|confirmed',
-        ]);
+// داخل AuthController.php - Register function
 
-        // 2. Sanitization (تنظيف البيانات قبل الحفظ)
-        $user = User::create([
-            'name'     => Str::title(trim(strip_tags($request->name))),
-            'email'    => strtolower(trim($request->email)),
-            'password' => Hash::make($request->password),
-        ]);
+public function register(Request $request): JsonResponse
+{
+    $request->validate([
+        'name'     => 'required|string|max:255',
+        'email'    => 'required|email|unique:users',
+        'password' => 'required|confirmed',
+        'role'     => 'required|in:freelancer,client', // لازم يختار واحد من دول
+    ]);
 
-        // 3. الرد باستخدام الـ success function بتاعتك
-        return $this->success($user, 'Account created successfully', 201);
-    }
+    $user = User::create([
+        'name'     => Str::title(trim(strip_tags($request->name))),
+        'email'    => strtolower(trim($request->email)),
+        'password' => Hash::make($request->password),
+    ]);
+
+    // دي الحركة السحرية بتاعة الباكدج
+    $user->assignRole($request->role);
+    Auth::login($user);
+
+    return $this->success($user->load('roles'), 'Account created successfully', 201);
+}
 
     /**
      * تسجيل الدخول
@@ -78,5 +82,24 @@ class AuthController extends Controller
         $request->session()->regenerateToken();
 
         return $this->success(null, 'Logged out successfully');
+    }
+    public function updateSkills(Request $request)
+    {
+        $request->validate([
+            'skills'   => 'required|array',
+            'skills.*' => 'exists:skills,id',
+        ]);
+    
+        // السطر ده دلوقتي هيشتغل ويرجع اليوزر بدل null
+        $user = auth()->user(); 
+        
+        if (!$user) {
+            return $this->error('User not authenticated', [], 401);
+        }
+    
+        $user->skills()->sync($request->skills); 
+    
+        // يفضل تستخدم التريت بتاعك هنا برضه عشان الرد يكون موحد
+        return $this->success(null, 'Skills updated successfully!');
     }
 }

@@ -1,8 +1,7 @@
 <?php
 
 return [
-  'paths' => ['api/*', 'sanctum/csrf-cookie', 'login', 'register', 'logout'],
-  'allowed_methods' => ['*'],
+  'paths' => ['api/*', 'sanctum/csrf-cookie', '*'], // الـ '*' الأخيرة دي بتضمن أي مسار تاني  'allowed_methods' => ['*'],
   
   // هنا نحدد رابط الـ React بدقة بدلاً من '*'
   'allowed_origins' => ['http://localhost:5173'], 

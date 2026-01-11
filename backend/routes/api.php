@@ -3,7 +3,7 @@
 use App\Http\Controllers\Api\AuthController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-
+use App\Models\Skill;
 /*
 |--------------------------------------------------------------------------
 | Public Routes (المسارات العامة)
@@ -26,7 +26,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', function (Request $request) {
         return $request->user();
     });
+    Route::post('/user/skills', [AuthController::class, 'updateSkills']);
 
-    // تسجيل الخروج وحذف الجلسة
-    Route::post('/logout', [AuthController::class, 'logout']);
+  });
+ 
+// 1. مسار جلب المهارات (تأكد إنه موجود)
+Route::get('/skills', function () {
+  return Skill::all();
 });
