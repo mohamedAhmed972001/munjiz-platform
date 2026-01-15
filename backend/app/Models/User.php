@@ -2,55 +2,63 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Spatie\Permission\Traits\HasRoles;
-use Illuminate\Database\Eloquent\Casts\Attribute;
+use Laravel\Sanctum\HasApiTokens;
+use Spatie\Permission\Traits\HasRoles; // <- Spatie
 
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmail
 {
-    use HasFactory, Notifiable, HasRoles;
+    use HasApiTokens, Notifiable, HasRoles; // add HasRoles
 
     protected $fillable = [
         'name',
         'email',
         'password',
-        'is_active', // ضيف دي هنا عشان تقدر تتحكم فيها
+        // you may keep 'role' column for quick read, but authoritative source is spatie tables
+        'role',
     ];
 
     protected $hidden = [
         'password',
         'remember_token',
-        'roles', // بنخفي العلاقة الخام وبنبعت الـ role_name بدالها
     ];
 
-    /**
-     * Appends: بنضيف حقول "وهمية" تظهر لما نحول الموديل لـ JSON
-     */
-    protected $appends = ['role_name'];
+    protected $casts = [
+        'email_verified_at' => 'datetime',
+    ];
 
-    /**
-     * Accessor: لجلب اسم الدور الحالي للمستخدم بسهولة
-     * ده هيخلي الـ React يستلم حقل اسمه role_name فوراً
-     */
-    protected function roleName(): Attribute
+    // Relations
+    // public function profile()
+    // {
+    //     return $this->hasOne(Profile::class);
+    // }
+
+    // public function projects()
+    // {
+    //     return $this->hasMany(Project::class, 'owner_id');
+    // }
+
+    // public function bids()
+    // {
+    //     return $this->hasMany(Bid::class, 'freelancer_id');
+    // }
+
+    // Helper convenience if you keep role column
+    public function isAdmin(): bool
     {
-        return Attribute::make(
-            get: fn () => $this->roles->first()?->name ?? 'no_role',
-        );
+        // prefer Spatie check, fallback to column
+        return $this->hasRole('admin') || $this->role === 'admin';
     }
 
-    protected function casts(): array
+    public function isClient(): bool
     {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-        ];
+        return $this->hasRole('client') || $this->role === 'client';
     }
-    // ضيف الميثود دي جوه كلاس User
-// app/Models/User.php
-public function skills() {
-  return $this->belongsToMany(Skill::class);
-}
+
+    public function isFreelancer(): bool
+    {
+        return $this->hasRole('freelancer') || $this->role === 'freelancer';
+    }
 }

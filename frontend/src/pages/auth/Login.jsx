@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { authService } from '../api/authService';
+import { authService } from '../../api/authService';
+import { useNavigate, Link } from 'react-router-dom'; // 1. ضفنا Link هنا
 
 const Login = () => {
-    // حالة تخزين بيانات تسجيل الدخول
+    const navigate = useNavigate();
+    
     const [formData, setFormData] = useState({
         email: '',
         password: '',
@@ -10,26 +12,29 @@ const Login = () => {
 
     const [errors, setErrors] = useState({});
 
-    // دالة معالجة تسجيل الدخول
     const handleSubmit = async (e) => {
-        e.preventDefault();
-        setErrors({});
-        try {
-            await authService.login(formData);
-            // نجلب بيانات المستخدم بعد تسجيل الدخول للتأكد من الـ Session
-            const user = await authService.getUser();
-            console.log("Logged in user:", user.data);
-            alert("Welcome back, " + user.data.name);
-            
-            // هنا مستقبلاً هنستخدم الـ Role عشان نوجهه للصفحة الصح
-            // window.location.href = '/dashboard'; 
-        } catch (err) {
-            if (err.response && err.response.status === 422) {
-                setErrors(err.response.data.errors);
-            } else {
-                alert("Login failed. Please check your credentials.");
-            }
-        }
+      e.preventDefault();
+      setErrors({});
+      try {
+          await authService.login(formData);
+          const userResponse = await authService.getUser();
+          const userData = userResponse.data;
+  
+          if (userData.role_name === 'admin') {
+              navigate('/admin-panel'); 
+          } else {
+              navigate('/dashboard'); 
+          }
+  
+          alert("Welcome back, " + userData.name);
+          
+      } catch (err) {
+          if (err.response && err.response.status === 422) {
+              setErrors(err.response.data.errors);
+          } else {
+              alert("Login failed. Please check your credentials.");
+          }
+      }
     };
 
     return (
@@ -61,6 +66,16 @@ const Login = () => {
                         Login
                     </button>
                 </form>
+
+                {/* 2. الجزء الخاص بالتحويل لصفحة التسجيل */}
+                <div className="mt-6 text-center">
+                    <p className="text-sm text-gray-600">
+                        Don't have an account?{" "}
+                        <Link to="/register" className="text-blue-600 hover:underline font-semibold">
+                            Create a new account
+                        </Link>
+                    </p>
+                </div>
             </div>
         </div>
     );

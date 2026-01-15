@@ -1,34 +1,58 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Register from './pages/Register';
-import Login from './pages/Login';
-import CompleteProfile from './pages/CompleteProfile'; // التأكد من الاسم هنا
-import Dashboard from './pages/Dashboard'; 
+import React, { useEffect, useState } from "react";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { authService } from "./api/authService";
+import ProtectedRoute from "./routes/ProtectedRoute";
+
+// Pages
+import Login from "./pages/auth/Login";
+import Register from "./pages/auth/Register";
+import ClientDashboard from "./pages/client/Dashboard";
+import CreateProject from "./pages/client/CreateProject";
+import ProjectManager from "./pages/client/ProjectManager"; // صفحة الكلاينت
+import FreelancerDashboard from "./pages/freelancer/Dashboard";
+import ProjectView from "./pages/freelancer/ProjectView";   // صفحة الفريلانسر
 
 function App() {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    // تشيك السيشن مرة واحدة أول ما الموقع يفتح
+    authService.getUser()
+      .then(res => setUser(res.data))
+      .catch(() => setUser(null))
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) return <div className="h-screen flex items-center justify-center font-bold">Checking Munjiz Security... 🔒</div>;
+
   return (
     <Router>
-      <div className="App">
-        <Routes>
-          <Route path="/register" element={<Register />} />
-          <Route path="/login" element={<Login />} />
-          
-          {/* ربط المسار بالكومبوننت اللي اسمه CompleteProfile */}
-          <Route path="/complete-profile" element={<CompleteProfile />} />
-          
-          <Route path="/dashboard" element={<Dashboard />} />
+      <Routes>
+        <Route path="/login" element={!user ? <Login /> : <Navigate to="/" />} />
+        
+        {/* === منطقة الكلاينت === */}
+        <Route element={<ProtectedRoute user={user} allowedRoles={['client']} />}>
+            <Route path="/client/dashboard" element={<ClientDashboard user={user} />} />
+            <Route path="/client/projects/create" element={<CreateProject />} />
+            {/* لاحظ المسار هنا: خاص بإدارة المشروع */}
+            <Route path="/client/projects/:id/manage" element={<ProjectManager />} />
+        </Route>
 
-          <Route path="/" element={
-            <div className="flex flex-col items-center justify-center h-screen font-bold">
-              <h1 className="text-3xl mb-4">Welcome to Munjiz Platform 🚀</h1>
-              <div className="space-x-4">
-                <a href="/login" className="text-blue-600 underline">Login</a>
-                <a href="/register" className="text-blue-600 underline">Register</a>
-              </div>
-            </div>
-          } />
-        </Routes>
-      </div>
+        {/* === منطقة الفريلانسر === */}
+        <Route element={<ProtectedRoute user={user} allowedRoles={['freelancer']} />}>
+            <Route path="/freelancer/dashboard" element={<FreelancerDashboard user={user} />} />
+            {/* لاحظ المسار هنا: خاص برؤية المشروع والتقديم */}
+            <Route path="/projects/:id" element={<ProjectView />} />
+        </Route>
+
+        {/* التوجيه الرئيسي */}
+        <Route path="/" element={
+            user ? (
+                user.role_name === 'client' ? <Navigate to="/client/dashboard" /> : <Navigate to="/freelancer/dashboard" />
+            ) : <Navigate to="/login" />
+        } />
+      </Routes>
     </Router>
   );
 }

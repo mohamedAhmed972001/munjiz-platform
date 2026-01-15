@@ -3,30 +3,50 @@
 namespace App\Traits;
 
 use Illuminate\Http\JsonResponse;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 trait ApiResponseTrait
 {
-    /**
-     * استجابة ناجحة
-     */
-    protected function success($data = null, string $message = 'Success', int $status = 200): JsonResponse
+    protected function success($data = null, string $message = 'OK', int $status = 200): JsonResponse
     {
-        return response()->json([
-            'status'  => true,
+        $payload = [
+            'status' => 'success',
             'message' => $message,
-            'data'    => $data,
-        ], $status);
+            'data' => $data,
+        ];
+
+        return response()->json($payload, $status);
     }
 
-    /**
-     * استجابة بفشل
-     */
     protected function error(string $message = 'Error', array $errors = [], int $status = 400): JsonResponse
     {
-        return response()->json([
-            'status'  => false,
+        $payload = [
+            'status' => 'error',
             'message' => $message,
-            'errors'  => $errors,
-        ], $status);
+            'errors' => $errors,
+        ];
+
+        return response()->json($payload, $status);
+    }
+
+    protected function paginated(LengthAwarePaginator $paginator, $resourceCollection = null): JsonResponse
+    {
+        $data = $resourceCollection ? $resourceCollection : $paginator->items();
+
+        $meta = [
+            'current_page' => $paginator->currentPage(),
+            'last_page' => $paginator->lastPage(),
+            'per_page' => $paginator->perPage(),
+            'total' => $paginator->total(),
+        ];
+
+        $payload = [
+            'status' => 'success',
+            'message' => 'OK',
+            'data' => $data,
+            'meta' => $meta,
+        ];
+
+        return response()->json($payload, 200);
     }
 }

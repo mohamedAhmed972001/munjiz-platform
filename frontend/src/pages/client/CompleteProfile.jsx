@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { authService } from '../api/authService';
+import { authService } from '../../api/authService';
 import { useNavigate } from 'react-router-dom';
 
 const CompleteProfile = () => {

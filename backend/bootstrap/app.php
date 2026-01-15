@@ -15,21 +15,17 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
-    ->withMiddleware(function (Middleware $middleware) {
-        $middleware->statefulApi(); 
+    ->withMiddleware(function ($middleware) {
 
-        // ملاحظة احترافية: Sanctum عادة بيحتاج الـ CSRF يكون شغال
-        // إحنا بنستثني بس لو إنت بتجرب بـ Postman، لكن مع React خليهم محميين
-        $middleware->validateCsrfTokens(except: [
-            'sanctum/csrf-cookie',
-            // 'api/register', // يفضل تخليهم محميين في الإنتاج
-            // 'api/login',
-        ]);
-
-        $middleware->alias([
-            'role' => \App\Http\Middleware\CheckRole::class,
-        ]);
-    })
+      $middleware->statefulApi(); // مهم جدًا
+$middleware->append(\Illuminate\Session\Middleware\StartSession::class);
+  
+      // aliases (مثال لـ role middleware)
+      $middleware->alias([
+          'role' => \App\Http\Middleware\CheckRole::class,
+      ]);
+  })
+  
     ->withExceptions(function (Exceptions $exceptions) {
 
         // 1. معالجة أخطاء الـ Validation

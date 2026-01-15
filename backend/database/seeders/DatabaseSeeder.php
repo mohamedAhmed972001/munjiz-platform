@@ -17,9 +17,8 @@ class DatabaseSeeder extends Seeder
     {
         // User::factory(10)->create();
         $this->call([
-          RoleSeeder::class,      // بيكريت الأدوار الأول
-          AdminUserSeeder::class,
-          SkillSeeder::class // بيكريت الأدمن ويديله الدور
+          RolePermissionSeeder::class,      // بيكريت الأدوار الأول
+          AdminSeeder::class,
       ]);
         User::factory()->create([
             'name' => 'Test User',

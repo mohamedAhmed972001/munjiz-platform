@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { authService } from '../api/authService';
+import { authService } from '../../api/authService';
 import { useNavigate } from 'react-router-dom'; // 1. استيراد الأداة
 
 const Register = () => {
