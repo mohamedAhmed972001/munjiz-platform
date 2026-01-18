@@ -7,10 +7,10 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles; // <- Spatie
-
+use Illuminate\Database\Eloquent\Factories\HasFactory; // 1. لازم تعمل Import للـ Trait دي
 class User extends Authenticatable implements MustVerifyEmail
 {
-    use HasApiTokens, Notifiable, HasRoles; // add HasRoles
+    use HasApiTokens, Notifiable, HasRoles,HasFactory; // add HasRoles
 
     protected $fillable = [
         'name',
@@ -25,15 +25,19 @@ class User extends Authenticatable implements MustVerifyEmail
         'remember_token',
     ];
 
-    protected $casts = [
-        'email_verified_at' => 'datetime',
-    ];
+    protected function casts(): array
+    {
+        return [
+            'email_verified_at' => 'datetime',
+            'password' => 'hashed',
+        ];
+    }
 
-    // Relations
-    // public function profile()
-    // {
-    //     return $this->hasOne(Profile::class);
-    // }
+    //Relations
+    public function profile()
+    {
+        return $this->hasOne(Profile::class);
+    }
 
     // public function projects()
     // {

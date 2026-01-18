@@ -4,9 +4,10 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Validation\ValidationException;
-use Symfony\Component\HttpKernel\Exception\NotFoundHttpException; // مهمة للـ 404
-use Illuminate\Http\Request; // السطر ده كان ناقص عندك ومهم جداً
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Illuminate\Http\Request;
 use Illuminate\Http\Exceptions\ThrottleRequestsException;
+use Illuminate\Session\Middleware\StartSession;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -15,20 +16,29 @@ return Application::configure(basePath: dirname(__DIR__))
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
     )
-    ->withMiddleware(function ($middleware) {
 
-      $middleware->statefulApi(); // مهم جدًا
-$middleware->append(\Illuminate\Session\Middleware\StartSession::class);
-  
-      // aliases (مثال لـ role middleware)
-      $middleware->alias([
-          'role' => \App\Http\Middleware\CheckRole::class,
-      ]);
-  })
-  
+    ->withMiddleware(function (Middleware $middleware) {
+
+        // Sanctum Stateful (Cookies + Session)
+        $middleware->statefulApi();
+
+        // Enable session for API
+        $middleware->append(StartSession::class);
+
+        // CSRF except Sanctum endpoint
+        $middleware->validateCsrfTokens(except: [
+            'sanctum/csrf-cookie',
+        ]);
+
+        // Middleware aliases
+        $middleware->alias([
+            'role' => \App\Http\Middleware\RoleMiddleware::class,
+        ]);
+    })
+
     ->withExceptions(function (Exceptions $exceptions) {
 
-        // 1. معالجة أخطاء الـ Validation
+        // Validation errors
         $exceptions->render(function (ValidationException $e, Request $request) {
             if ($request->is('api/*')) {
                 return response()->json([
@@ -39,25 +49,38 @@ $middleware->append(\Illuminate\Session\Middleware\StartSession::class);
             }
         });
 
-        // 2. معالجة الـ 404 (لو اللينك غلط) - ضيف الجزء ده
+        // 404
         $exceptions->render(function (NotFoundHttpException $e, Request $request) {
             if ($request->is('api/*')) {
                 return response()->json([
                     'status'  => false,
-                    'message' => 'هذا المسار غير موجود أو تم حذفه',
+                    'message' => 'المسار غير موجود',
                 ], 404);
             }
         });
 
-        // 3. معالجة الـ Rate Limit (الـ Throttle بتاعك)
+        // Rate limit
         $exceptions->render(function (ThrottleRequestsException $e, Request $request) {
             if ($request->is('api/*')) {
                 return response()->json([
                     'status'  => false,
-                    'message' => 'محاولات كثيرة جداً، يرجى الانتظار قليلاً.',
-                    'errors'  => ['throttle' => 'Too many attempts.'],
+                    'message' => 'محاولات كثيرة جداً',
                 ], 429);
             }
         });
 
-    })->create();
+        // Unauthenticated (NO redirect)
+        $exceptions->render(function (
+            \Illuminate\Auth\AuthenticationException $e,
+            Request $request
+        ) {
+            if ($request->is('api/*')) {
+                return response()->json([
+                    'status'  => false,
+                    'message' => 'Unauthenticated',
+                ], 401);
+            }
+        });
+    })
+
+    ->create();

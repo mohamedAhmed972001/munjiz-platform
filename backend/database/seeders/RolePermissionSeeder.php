@@ -6,25 +6,24 @@ use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
 
-class RolePermissionSeeder extends Seeder
+class RolesAndPermissionsSeeder extends Seeder
 {
-    public function run()
+    public function run(): void
     {
-        // Define permissions list (adjust to needs)
+        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+
+        // Permissions
         $permissions = [
-            'create project',
-            'edit own project',
-            'delete own project',
-            'accept bid',
-            'bid on project',
-            'manage profile',
-            'manage categories',
+            'create projects',
+            'edit projects',
+            'delete projects',
+            'view projects',
+            'bid on projects',
             'manage users',
-            'view analytics',
         ];
 
-        foreach ($permissions as $perm) {
-            Permission::firstOrCreate(['name' => $perm]);
+        foreach ($permissions as $permission) {
+            Permission::firstOrCreate(['name' => $permission]);
         }
 
         // Roles
@@ -33,22 +32,18 @@ class RolePermissionSeeder extends Seeder
         $freelancer = Role::firstOrCreate(['name' => 'freelancer']);
 
         // Assign permissions
-        // admin gets all
-        $admin->syncPermissions(Permission::all());
+        $admin->givePermissionTo(Permission::all());
 
-        // client: project creator rights + accept bid
-        $client->syncPermissions([
-            'create project',
-            'edit own project',
-            'delete own project',
-            'accept bid',
-            'manage profile',
+        $client->givePermissionTo([
+            'create projects',
+            'edit projects',
+            'delete projects',
+            'view projects',
         ]);
 
-        // freelancer: can bid and manage profile
-        $freelancer->syncPermissions([
-            'bid on project',
-            'manage profile',
+        $freelancer->givePermissionTo([
+            'view projects',
+            'bid on projects',
         ]);
     }
 }
